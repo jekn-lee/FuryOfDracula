@@ -8,7 +8,7 @@
 #include "Map.h" //if you decide to use the Map ADT
   
 struct _Player {
-   int playerId;
+   PlayerID playerId;
    int health;
    int location;
    int trail[TRAIL_SIZE];
@@ -18,8 +18,8 @@ struct _Player {
      
 struct gameView {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    int currentTurn;
-    int roundNumber;
+    PlayerID currentTurn;
+    Round roundNumber;
     int score;
     Player players[NUM_PLAYERS];
 };
