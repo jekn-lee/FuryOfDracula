@@ -12,7 +12,6 @@ struct _Player {
    int health;
    int location;
    int trail[TRAIL_SIZE];
-   int 
 } Player;  
   
      
