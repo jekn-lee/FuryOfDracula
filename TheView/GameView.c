@@ -10,6 +10,8 @@
 struct _Player {
    int playerId;
    int health;
+   int location;
+   int trail[TRAIL_SIZE];
    int 
 } Player;  
   
@@ -17,6 +19,8 @@ struct _Player {
 struct gameView {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
     int currentTurn;
+    int roundNumber;
+    int score;
     Player players[NUM_PLAYERS];
 };
      
