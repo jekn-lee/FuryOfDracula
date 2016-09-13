@@ -2,6 +2,7 @@
 //Hi
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 #include "Globals.h"
 #include "Game.h"
 #include "GameView.h"
@@ -53,6 +54,8 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
     GameView gameView = malloc(sizeof(struct gameView));
     //define initial state
     initialiseGameView(gameView);
+    //go through string 8 characters at a time
+    int nstrings=strlen(pastPlays)/8;
     return gameView;
 }
      
