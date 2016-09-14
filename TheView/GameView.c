@@ -7,16 +7,18 @@
 #include "Game.h"
 #include "GameView.h"
 #include "Map.h" //if you decide to use the Map ADT
+#include "TrailLinkedList.h"
   
 typedef struct _Player {
-   //PlayerID playerId;
+   PlayerID playerId;
+   //can be used for extra check
+   //making sure we are in the correct player info
    int health;
    int location;
-   int trail[TRAIL_SIZE];
+   List trail;
 } Player;  
 
 typedef struct gameView {
-    //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
     PlayerID currentTurn;
     Round roundNumber;
     int score;
@@ -41,10 +43,7 @@ static void initialiseGameView(GameView newView)
            newView->players[user].health=GAME_START_HUNTER_LIFE_POINTS;
         }
         newView->players[user].location=0;//Check this - i think 0 means they're in the Adriatic Sea
-        int i;
-        for(i=0; i<TRAIL_SIZE;i++){
-            newView->players[user].trail[i]=UNKNOWN_LOCATION;
-        }
+        newView->players[user].trail=newTrail();//fills list with UNKNOWN
     }
 }
 // Creates a new GameView to summarise the current state of the game
@@ -60,7 +59,7 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
     for (n=0; n < nstrings; n++){
       int i = 8*n;
 
-      //find which player's turn
+      //find which players' turn
       PlayerID player;
       switch(pastPlays[i]){
         case 'G': player = PLAYER_LORD_GODALMING; break;
@@ -79,6 +78,9 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
       tmp[1] = pastPlays[i+2];
       tmp[2] = '\0';
       locationID loc = abbrevToID(tmp);
+      
+      //addLocation(gameView->players[player].trail, loc);
+      
       if (player != PLAYER_DRACULA){
         if (loc == gameView->players[player].location){
           gameView->players[player].health += 3;
@@ -135,35 +137,36 @@ void disposeGameView(GameView toBeDeleted)
 // Get the current round
 Round getRound(GameView currentView)
 {
-    //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+    assert(currentView!=NULL);
     return currentView->roundNumber;
 }
 
 // Get the id of current player - ie whose turn is it?
 PlayerID getCurrentPlayer(GameView currentView)
 {
-    //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+    assert(currentView!=NULL);
     return currentView->currentTurn;
 }
 
 // Get the current score
 int getScore(GameView currentView)
 {
-    //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+    assert(currentView!=NULL);
     return currentView->score;
 }
 
 // Get the current health points for a given player
 int getHealth(GameView currentView, PlayerID player)
 {
-    //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+    assert(currentView!=NULL);
     return currentView->players[player].health;
 }
 
 // Get the current location id of a given player
 LocationID getLocation(GameView currentView, PlayerID player)
 {
-    //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+    assert(currentView!=NULL);
+    //could use findLocation(currentView->players[player].trail, 0);
     return currentView->players[player].location;
 }
 
@@ -173,7 +176,11 @@ LocationID getLocation(GameView currentView, PlayerID player)
 void getHistory(GameView currentView, PlayerID player,
                             LocationID trail[TRAIL_SIZE])
 {
-    //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+    Link myTrail=currentView->players[player].trail;
+    int i;
+    for(i=0;i<TRAIL_SIZE;i++){
+        trail[i]=findLocation(myTrail,i);
+    }
 }
 
 //// Functions that query the map to find information about connectivity
