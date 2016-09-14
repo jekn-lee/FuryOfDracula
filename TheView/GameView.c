@@ -15,7 +15,7 @@ typedef struct _Player {
    int trail[TRAIL_SIZE];
 } Player;  
 
-typedef struct _gameView {
+typedef struct gameView {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
     PlayerID currentTurn;
     Round roundNumber;
@@ -40,7 +40,7 @@ static void initialiseGameView(GameView newView)
         }else{
            newView->players[user].health=GAME_START_HUNTER_LIFE_POINTS;
         }
-        newView->players[user].location=0;//Check this
+        newView->players[user].location=0;//Check this - i think 0 means they're in the Adriatic Sea
         int i;
         for(i=0; i<TRAIL_SIZE;i++){
             newView->players[user].trail[i]=UNKNOWN_LOCATION;
@@ -55,7 +55,42 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
     //define initial state
     initialiseGameView(gameView);
     //go through string 8 characters at a time
-    int nstrings=strlen(pastPlays)/8;
+    int nstrings=(strlen(pastPlays) - 1)/8;
+    int n = 0;
+    for (n=0; n < nstrings; n++){
+      int i = 8*n;
+
+      //find which player's turn
+      int player;
+      switch(pastPlays[i]){
+        case 'G': player = PLAYER_LORD_GODALMING; break;
+        case 'S': player = PLAYER_DR_SEWARD; break;
+        case 'H': player = PLAYER_VAN_HELSING; break;
+        case 'M': player = PLAYER_MINA_HARKER; break;
+        case 'D': player = PLAYER_DRACULA; break;
+      }
+
+      //find location
+      char tmp[3];
+      tmp[0] = pastPlays[i+1];
+      tmp[1] = pastPlays[i+2];
+      int loc = abbrevToID(tmp);
+      if (player != PLAYER_DRACULA){
+        if (loc == gameView->players[player].location){
+          gameView->players[player].health += 3;
+          if (gameView->players[player].health > 9)
+            gameView->players[player].health = 9;
+        } else {
+          gameView->players[player].location = loc;
+        }
+      } else {
+        //stuff for dracula
+      }
+
+      if (player == PLAYER_DRACULA)
+        gameView->score--;
+    }
+    
     return gameView;
 }
      
