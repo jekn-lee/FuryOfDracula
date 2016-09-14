@@ -9,7 +9,7 @@
 #include "Map.h" //if you decide to use the Map ADT
   
 typedef struct _Player {
-   PlayerID playerId;
+   //PlayerID playerId;
    int health;
    int location;
    int trail[TRAIL_SIZE];
@@ -61,7 +61,7 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
       int i = 8*n;
 
       //find which player's turn
-      int player;
+      PlayerID player;
       switch(pastPlays[i]){
         case 'G': player = PLAYER_LORD_GODALMING; break;
         case 'S': player = PLAYER_DR_SEWARD; break;
@@ -70,11 +70,15 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
         case 'D': player = PLAYER_DRACULA; break;
       }
 
+      gameView->currentTurn = player;
+      gameView->players[player].playerId = player;
+
       //find location
       char tmp[3];
-      tmp[0] = pastPlays[i+1];
+      tmp[0] = pastPlays[i+1]; //maybe increment?
       tmp[1] = pastPlays[i+2];
-      int loc = abbrevToID(tmp);
+      tmp[2] = '\0';
+      locationID loc = abbrevToID(tmp);
       if (player != PLAYER_DRACULA){
         if (loc == gameView->players[player].location){
           gameView->players[player].health += 3;
@@ -85,13 +89,36 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
         }
       } else {
         //stuff for dracula
+        //if location is not a city
+        if (loc == NOWHERE){
+          switch(tmp[0]){
+            case 'S':
+              gameView->players[player].health -= LIFE_LOSS_SEA;
+              gameView->players[player].location = SEA_UNKNOWN;
+              break;
+            case 'T':
+              gameView->players[player].health += LIFE_GAIN_CASTLE_DRACULA;
+              gameView->players[player].location = CASTLE_DRACULA;
+              break;
+            case 'C':
+              gameView->players[player].location = CITY_UNKNOWN;
+            case 'H':
+              gameView->players[player].location = HIDE;
+            case 'D':
+              //stuff for double back
+          }
+        } else {
+          if (isSea(loc) == TRUE)
+            gameView->players[player].health -= LIFE_LOSS_SEA;
+          gameView->players[player].location = loc;
+        }
       }
 
-      if (player == PLAYER_DRACULA)
+      if (player == PLAYER_DRACULA){
         gameView->score--;
+        gameView->roundNumber++;
+      }
     }
-    
-    return gameView;
 }
      
      
