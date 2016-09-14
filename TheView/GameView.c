@@ -55,9 +55,11 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
     //define initial state
     initialiseGameView(gameView);
     //go through string 8 characters at a time
-    int nstrings=(strlen(pastPlays) - 1)/8;
+
+    int nstrings=strlen(pastPlays)/8;
     int n = 0;
     for (n=0; n < nstrings; n++){
+      printf("it is player %d turn\n", gameView->currentTurn);
       int i = 8*n;
 
       //find which player's turn
@@ -70,17 +72,18 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
         case 'D': player = PLAYER_DRACULA; break;
       }
 
-      gameView->currentTurn = player;
-      gameView->players[player].playerId = player;
-
       //find location
       char tmp[3];
       tmp[0] = pastPlays[i+1]; //maybe increment?
       tmp[1] = pastPlays[i+2];
       tmp[2] = '\0';
-      locationID loc = abbrevToID(tmp);
+      LocationID loc = abbrevToID(tmp);
+
+      //stuff for hunters
       if (player != PLAYER_DRACULA){
         if (loc == gameView->players[player].location){
+          //get health if they are in the same location
+          //check that health doesn't exceed 9
           gameView->players[player].health += 3;
           if (gameView->players[player].health > 9)
             gameView->players[player].health = 9;
@@ -102,14 +105,18 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
               break;
             case 'C':
               gameView->players[player].location = CITY_UNKNOWN;
+              break;
             case 'H':
               gameView->players[player].location = HIDE;
+              break;
             case 'D':
               //stuff for double back
+              break;
           }
         } else {
-          if (isSea(loc) == TRUE)
+          if (isSea(loc) == TRUE){
             gameView->players[player].health -= LIFE_LOSS_SEA;
+          }
           gameView->players[player].location = loc;
         }
       }
@@ -117,8 +124,14 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
       if (player == PLAYER_DRACULA){
         gameView->score--;
         gameView->roundNumber++;
+        gameView->currentTurn = PLAYER_LORD_GODALMING;
+      } else {
+        gameView->currentTurn++;
       }
+
+      printf("it is player %d turn\n", gameView->currentTurn);
     }
+
 }
      
      
