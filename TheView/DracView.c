@@ -74,7 +74,7 @@ void lastMove(DracView currentView, PlayerID player,
                  LocationID *start, LocationID *end)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-     LocationID trail[TRAIL_SIZE];
+    LocationID trail[TRAIL_SIZE];
     giveMeTheTrail(currentView,player,trail);
     *start = trail[0];
     *end = trail[1];
@@ -105,7 +105,8 @@ void giveMeTheTrail(DracView currentView, PlayerID player,
 LocationID *whereCanIgo(DracView currentView, int *numLocations, int road, int sea)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    return NULL;
+    int *w = whereCanTheyGo(currentView,numLocations, PLAYER_DRACULA ,road,FALSE,sea);
+    return w;
 }
 
 // What are the specified player's next possible moves
