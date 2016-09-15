@@ -55,12 +55,13 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
     initialiseGameView(gameView);
     //go through string 8 characters at a time
     int nstrings=(strlen(pastPlays) + 1)/8;
-    int n = 0;
+    //printf("nstrings is %d\n", nstrings);
+    int n;
     for (n=0; n < nstrings; n++){
       //set i to be the first index in the 8-char string
       //i.e. 0, 8, 16..
       int i = 8*n;
-
+      //printf("n is %d\n", n);
 //==================== Player info =================================
       //find which players' turn, from stringO8[0]
       //here inp is 0, 8, 16..
@@ -75,7 +76,7 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
 
       //ensure that we are editing the correct player struct
       assert(gameView->players[player].playerId == player);
-
+      //printf("player is %d\n", player);
 //==================== Location info =================================
       //find location and store as string
       //looking at stringO8[1..2]
@@ -128,8 +129,21 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
               //tmp[1] holds n, n=1..5
               //curr loc has not been added to trail yet
               //have to store the #define DOUBLE_BACK_n somehow
-              loc=findLocation(gameView->players[player].trail,((int)tmp[1]-1));
+              loc = DOUBLE_BACK_1;
+              int backID = ((int)tmp[1]) -49;
+              loc += backID;
+              //printf("backID is %d\n", backID);
+              int oldLoc = findLocation(gameView->players[player].trail,backID);
+              //printf("location is %d\n", oldLoc);
+              if (oldLoc == SEA_UNKNOWN){
+                gameView->players[player].health -= LIFE_LOSS_SEA;
+              } else if (isSea(oldLoc) == TRUE){
+                gameView->players[player].health -= LIFE_LOSS_SEA;
+              }
+              //printf("loc is %d\n", loc);
               addLocation(gameView->players[player].trail, loc);
+              gameView->players[player].location = loc;
+              //addLocation(gameView->players[player].trail, loc);
               //needs stuff for sea and his location may now be revealed
               //check this
               break;
@@ -141,6 +155,7 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
           }
           gameView->players[player].location = loc;
           addLocation(gameView->players[player].trail, loc);
+          printf("loc is %d\n", loc);
         }
       }
 //==================== Hunter Actions =================================
@@ -184,6 +199,7 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
         gameView->score-=SCORE_LOSS_DRACULA_TURN;
         gameView->roundNumber++;
         gameView->currentTurn = PLAYER_LORD_GODALMING;
+        //printf("drac turn ended\n");
       } else {
         gameView->currentTurn++;
       }
