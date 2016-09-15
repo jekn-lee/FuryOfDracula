@@ -6,12 +6,13 @@
 #include "Game.h"
 #include "GameView.h"
 #include "DracView.h"
-// #include "Map.h" ... if you decide to use the Map ADT
-     
+#include "Map.h"    
+#include "TreilLinkedList.h "
+
 struct dracView {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    int hello;
-};
+    GameView g;
+}*DracView;
      
 
 // Creates a new DracView to summarise the current state of the game
@@ -19,7 +20,8 @@ DracView newDracView(char *pastPlays, PlayerMessage messages[])
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
     DracView dracView = malloc(sizeof(struct dracView));
-    dracView->hello = 42;
+     dracView->g = malloc(sizeof(GameView));
+    dracView->g = newGameView(pastPlays,messages);
     return dracView;
 }
      
@@ -28,6 +30,7 @@ DracView newDracView(char *pastPlays, PlayerMessage messages[])
 void disposeDracView(DracView toBeDeleted)
 {
     //COMPLETE THIS IMPLEMENTATION
+    disposeGameView(toBeDeleted->g);
     free( toBeDeleted );
 }
 
@@ -38,28 +41,32 @@ void disposeDracView(DracView toBeDeleted)
 Round giveMeTheRound(DracView currentView)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    return 0;
+    Round n = getRound(currentView->g);
+    return n;
 }
 
 // Get the current score
 int giveMeTheScore(DracView currentView)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    return 0;
+    int score = getScore(currentView->g);
+    return score;
 }
 
 // Get the current health points for a given player
 int howHealthyIs(DracView currentView, PlayerID player)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    return 0;
+    int health_points = getHealth(currentView->g,player);
+    return health_points;
 }
 
 // Get the current location id of a given player
 LocationID whereIs(DracView currentView, PlayerID player)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    return 0;
+    LocationID i = getLocation(currentView->g,player);
+    return i;
 }
 
 // Get the most recent move of a given player
@@ -67,6 +74,10 @@ void lastMove(DracView currentView, PlayerID player,
                  LocationID *start, LocationID *end)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+     LocationID trail[TRAIL_SIZE];
+    giveMeTheTrail(currentView,player,trail);
+    *start = trail[0];
+    *end = trail[1];
     return;
 }
 
@@ -85,6 +96,7 @@ void giveMeTheTrail(DracView currentView, PlayerID player,
                             LocationID trail[TRAIL_SIZE])
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
+    getHistory(currentView->g,player,trail);
 }
 
 //// Functions that query the map to find information about connectivity
@@ -101,5 +113,8 @@ LocationID *whereCanTheyGo(DracView currentView, int *numLocations,
                            PlayerID player, int road, int rail, int sea)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    return NULL;
+    LocationID from = whereIs(currentView,player);
+    Round round = giveMeTheRound(currentView);
+    int *w = connectedLocations(currentView->g,numLocations,from,player, round,road,rail,sea);
+    return w;
 }
