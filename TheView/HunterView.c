@@ -48,7 +48,7 @@ Round giveMeTheRound(HunterView currentView)
 PlayerID whoAmI(HunterView currentView)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    int id=
+    int id = getCurrentPlayer(currentView -> g);
     return id;
 }
 
@@ -93,7 +93,9 @@ LocationID *whereCanIgo(HunterView currentView, int *numLocations,
                         int road, int rail, int sea)
 {
     //REPLACE THIS WITH YOUR OWN IMPLEMENTATION
-    return NULL;
+    PlayerID I = whoAmI(currentView);
+    int *w = whereCanTheyGo(currentView,numLocations,I,road,FALSE,sea);
+    return w;
 }
 
 // What are the specified player's next possible moves
