@@ -8,7 +8,7 @@
 #include "GameView.h"
 #include "Map.h" //if you decide to use the Map ADT
 #include "TrailLinkedList.h"
-  
+
 typedef struct _Player {
    PlayerID playerId;
    //can be used for extra check
@@ -16,7 +16,7 @@ typedef struct _Player {
    int health;
    int location;
    List trail;
-} Player;  
+} Player;
 
 typedef struct gameView {
     PlayerID currentTurn;
@@ -25,7 +25,7 @@ typedef struct gameView {
     Player players[NUM_PLAYERS];
     Map europe;
 } gameView;
-  
+
 static void initialiseGameView(GameView newView)
 {
     //set up general information
@@ -42,7 +42,7 @@ static void initialiseGameView(GameView newView)
         }else{
            newView->players[user].health=GAME_START_HUNTER_LIFE_POINTS;
         }
-        newView->players[user].location=0;//Check this - i think 0 means they're in the Adriatic Sea
+        newView->players[user].location=UNKNOWN_LOCATION;//Check this - i think 0 means they're in the Adriatic Sea
         newView->players[user].trail=newTrail();//fills list with UNKNOWN
     }
 }
@@ -54,7 +54,7 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
     //define initial state
     initialiseGameView(gameView);
     //go through string 8 characters at a time
-    int nstrings=(strlen(pastPlays))/8;
+    int nstrings=(strlen(pastPlays) + 1)/8;
     int n = 0;
     for (n=0; n < nstrings; n++){
       //set i to be the first index in the 8-char string
@@ -73,10 +73,9 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
         case 'D': player = PLAYER_DRACULA; break;
       }
 
-      gameView->currentTurn = player;
       //ensure that we are editing the correct player struct
-      assert(gameView->players[player].playerId = player);
-      
+      assert(gameView->players[player].playerId == player);
+
 //==================== Location info =================================
       //find location and store as string
       //looking at stringO8[1..2]
@@ -85,9 +84,9 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
       tmp[1] = pastPlays[i+2]; //inp=2, 10, 18..
       tmp[2] = '\0';
       //convert location string to a locationID or NOWHERE
-      locationID loc = abbrevToID(tmp);
-      
-      //for hunter player 
+      LocationID loc = abbrevToID(tmp);
+
+      //for hunter player
       if (player != PLAYER_DRACULA){
         //check if they are resting, prev loc = curr loc
         if (loc == gameView->players[player].location){
@@ -101,7 +100,7 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
         //in either case trail is added to??
         addLocation(gameView->players[player].trail, loc);
       } else {
-      //for dracula 
+      //for dracula
         //if location is not a given/known, places.c returns NOWHERE
         if (loc == NOWHERE){
           //checking only the first index of the location string
@@ -113,48 +112,53 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
               break;
             case 'T'://teleports to castle dracula, gain life
               gameView->players[player].health += LIFE_GAIN_CASTLE_DRACULA;
-              gameView->players[player].location = CASTLE_DRACULA;
-              addLocation(gameView->players[player].trail, CASTLE_DRACULA);
+              gameView->players[player].location = TELEPORT;
+              addLocation(gameView->players[player].trail, TELEPORT);
               break;
             case 'C'://in an unknown city
               gameView->players[player].location = CITY_UNKNOWN;
               addLocation(gameView->players[player].trail, CITY_UNKNOWN);
               break;
-            case 'H'://staying in the same spot 
+            case 'H'://staying in the same spot
               gameView->players[player].location = HIDE;
-              // not sure addLocation(gameView->players[player].trail, loc);
+              addLocation(gameView->players[player].trail, HIDE);
               break;
             case 'D'://stuff for double back
               //change loc to spot in trail
               //tmp[1] holds n, n=1..5
               //curr loc has not been added to trail yet
-              loc=findLocation(gameView->players[player].trail,((int *)tmp[1]-1));
+              //have to store the #define DOUBLE_BACK_n somehow
+              loc=findLocation(gameView->players[player].trail,((int)tmp[1]-1));
               addLocation(gameView->players[player].trail, loc);
               //needs stuff for sea and his location may now be revealed
               //check this
               break;
           }
         } else {
-        //location is valid/known 
+        //location is valid/known
           if (isSea(loc) == TRUE){
             gameView->players[player].health -= LIFE_LOSS_SEA;
           }
           gameView->players[player].location = loc;
+          addLocation(gameView->players[player].trail, loc);
         }
       }
 //==================== Hunter Actions =================================
       if(player!=PLAYER_DRACULA){
          int k;
          for(k=3; k<7;k++){
-            switch(pastPlays[i]){
+            //whenever health is lost, check if health points are zero or lower
+            //if they are, change location of player to st joseph and marys
+            switch(pastPlays[i + k]){
                case 'T':
                   //encountered trap -> changes stats
+                  gameView->players[player].health -= LIFE_LOSS_TRAP_ENCOUNTER;
                   break;
                case 'V':
                   //Immature Vampire encountered
                   break;
-               case 'D': 
-                  //Dracula confronted 
+               case 'D':
+                  //Dracula confronted
                   gameView->players[PLAYER_DRACULA].health-=LIFE_LOSS_HUNTER_ENCOUNTER;
                   gameView->players[player].health-=LIFE_LOSS_DRACULA_ENCOUNTER;
                   //does the score change??
@@ -162,19 +166,33 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
                case '.':
                   break;
             }
+            if (gameView->players[player].health <= 0){
+              gameView->players[player].location = ST_JOSEPH_AND_ST_MARYS;
+              gameView->players[player].health = GAME_START_HUNTER_LIFE_POINTS;
+              addLocation(gameView->players[player].trail, ST_JOSEPH_AND_ST_MARYS);
+              break;
+            }
          }
       }else{
 //==================== Dracula Actions =================================
+         if(pastPlays[i+5]=='V'){
+            gameView->score-=SCORE_LOSS_VAMPIRE_MATURES;
+         }
       }
       //at end of each round, the score decreases by 1
       if (player == PLAYER_DRACULA){
-        gameView->score--;
+        gameView->score-=SCORE_LOSS_DRACULA_TURN;
         gameView->roundNumber++;
+        gameView->currentTurn = PLAYER_LORD_GODALMING;
+      } else {
+        gameView->currentTurn++;
       }
     }
+
+    return gameView;
 }
-     
-     
+
+
 // Frees all memory previously allocated for the GameView toBeDeleted
 void disposeGameView(GameView toBeDeleted)
 {
@@ -227,7 +245,7 @@ LocationID getLocation(GameView currentView, PlayerID player)
 void getHistory(GameView currentView, PlayerID player,
                             LocationID trail[TRAIL_SIZE])
 {
-    Link myTrail=currentView->players[player].trail;
+    List myTrail=currentView->players[player].trail;
     int i;
     for(i=0;i<TRAIL_SIZE;i++){
         trail[i]=findLocation(myTrail,i);
