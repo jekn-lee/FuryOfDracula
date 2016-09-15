@@ -54,12 +54,16 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
     //define initial state
     initialiseGameView(gameView);
     //go through string 8 characters at a time
-    int nstrings=(strlen(pastPlays) - 1)/8;
+    int nstrings=(strlen(pastPlays))/8;
     int n = 0;
     for (n=0; n < nstrings; n++){
+      //set i to be the first index in the 8-char string
+      //i.e. 0, 8, 16..
       int i = 8*n;
 
-      //find which players' turn
+//==================== Player info =================================
+      //find which players' turn, from stringO8[0]
+      //here inp is 0, 8, 16..
       PlayerID player;
       switch(pastPlays[i]){
         case 'G': player = PLAYER_LORD_GODALMING; break;
@@ -70,52 +74,99 @@ GameView newGameView(char *pastPlays, PlayerMessage messages[])
       }
 
       gameView->currentTurn = player;
-      gameView->players[player].playerId = player;
-
-      //find location
+      //ensure that we are editing the correct player struct
+      assert(gameView->players[player].playerId = player);
+      
+//==================== Location info =================================
+      //find location and store as string
+      //looking at stringO8[1..2]
       char tmp[3];
-      tmp[0] = pastPlays[i+1]; //maybe increment?
-      tmp[1] = pastPlays[i+2];
+      tmp[0] = pastPlays[i+1]; //inp=1, 9, 17..//maybe increment?
+      tmp[1] = pastPlays[i+2]; //inp=2, 10, 18..
       tmp[2] = '\0';
+      //convert location string to a locationID or NOWHERE
       locationID loc = abbrevToID(tmp);
       
-      //addLocation(gameView->players[player].trail, loc);
-      
+      //for hunter player 
       if (player != PLAYER_DRACULA){
+        //check if they are resting, prev loc = curr loc
         if (loc == gameView->players[player].location){
           gameView->players[player].health += 3;
+          //maximum hunter health is 9
           if (gameView->players[player].health > 9)
             gameView->players[player].health = 9;
         } else {
           gameView->players[player].location = loc;
         }
+        //in either case trail is added to??
+        addLocation(gameView->players[player].trail, loc);
       } else {
-        //stuff for dracula
-        //if location is not a city
+      //for dracula 
+        //if location is not a given/known, places.c returns NOWHERE
         if (loc == NOWHERE){
+          //checking only the first index of the location string
           switch(tmp[0]){
-            case 'S':
+            case 'S': //in an unknown sea, loses life
               gameView->players[player].health -= LIFE_LOSS_SEA;
               gameView->players[player].location = SEA_UNKNOWN;
+              addLocation(gameView->players[player].trail, SEA_UNKNOWN);
               break;
-            case 'T':
+            case 'T'://teleports to castle dracula, gain life
               gameView->players[player].health += LIFE_GAIN_CASTLE_DRACULA;
               gameView->players[player].location = CASTLE_DRACULA;
+              addLocation(gameView->players[player].trail, CASTLE_DRACULA);
               break;
-            case 'C':
+            case 'C'://in an unknown city
               gameView->players[player].location = CITY_UNKNOWN;
-            case 'H':
+              addLocation(gameView->players[player].trail, CITY_UNKNOWN);
+              break;
+            case 'H'://staying in the same spot 
               gameView->players[player].location = HIDE;
-            case 'D':
-              //stuff for double back
+              // not sure addLocation(gameView->players[player].trail, loc);
+              break;
+            case 'D'://stuff for double back
+              //change loc to spot in trail
+              //tmp[1] holds n, n=1..5
+              //curr loc has not been added to trail yet
+              loc=findLocation(gameView->players[player].trail,((int *)tmp[1]-1));
+              addLocation(gameView->players[player].trail, loc);
+              //needs stuff for sea and his location may now be revealed
+              //check this
+              break;
           }
         } else {
-          if (isSea(loc) == TRUE)
+        //location is valid/known 
+          if (isSea(loc) == TRUE){
             gameView->players[player].health -= LIFE_LOSS_SEA;
+          }
           gameView->players[player].location = loc;
         }
       }
-
+//==================== Hunter Actions =================================
+      if(player!=PLAYER_DRACULA){
+         int k;
+         for(k=3; k<7;k++){
+            switch(pastPlays[i]){
+               case 'T':
+                  //encountered trap -> changes stats
+                  break;
+               case 'V':
+                  //Immature Vampire encountered
+                  break;
+               case 'D': 
+                  //Dracula confronted 
+                  gameView->players[PLAYER_DRACULA].health-=LIFE_LOSS_HUNTER_ENCOUNTER;
+                  gameView->players[player].health-=LIFE_LOSS_DRACULA_ENCOUNTER;
+                  //does the score change??
+                  break;
+               case '.':
+                  break;
+            }
+         }
+      }else{
+//==================== Dracula Actions =================================
+      }
+      //at end of each round, the score decreases by 1
       if (player == PLAYER_DRACULA){
         gameView->score--;
         gameView->roundNumber++;
